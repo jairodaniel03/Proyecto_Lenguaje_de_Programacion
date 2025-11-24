@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:proyecto_lenguaje/src/models/book.dart';
 import 'package:proyecto_lenguaje/src/services/firestore_service.dart';
 
@@ -14,10 +15,11 @@ class _AddBookPageState extends State<AddBookPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _authorController = TextEditingController();
-  final _imageUrlController = TextEditingController();
-  final _totalPagesController = TextEditingController();
 
-  // El servicio se inicializa de forma asíncrona
+  // Para manejar el archivo seleccionado
+  String? _pickedFilePath;
+  String? _pickedFileName;
+
   FirestoreService? _firestoreService;
   bool _isInitializing = true;
 
@@ -28,7 +30,6 @@ class _AddBookPageState extends State<AddBookPage> {
   }
 
   Future<void> _initializeService() async {
-    // Usamos el factory constructor para obtener la instancia inicializada
     final service = await FirestoreService.create();
     setState(() {
       _firestoreService = service;
@@ -40,34 +41,55 @@ class _AddBookPageState extends State<AddBookPage> {
   void dispose() {
     _titleController.dispose();
     _authorController.dispose();
-    _imageUrlController.dispose();
-    _totalPagesController.dispose();
     super.dispose();
   }
 
+  Future<void> _pickPdf() async {
+    // Usamos el paquete file_picker para seleccionar solo archivos PDF
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    if (result != null) {
+      setState(() {
+        _pickedFilePath = result.files.single.path;
+        _pickedFileName = result.files.single.name;
+      });
+    } else {
+      // El usuario canceló la selección
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se seleccionó ningún archivo.')),
+      );
+    }
+  }
+
   Future<void> _addBook() async {
+    // Validar el formulario y que se haya seleccionado un archivo
     if (_formKey.currentState!.validate()) {
-      // Asegurarse de que el servicio está inicializado antes de usarlo
-      if (_firestoreService == null) {
+      if (_pickedFilePath == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('El servicio aún no está listo. Intente de nuevo.')),
+          const SnackBar(content: Text('Por favor, seleccione un archivo PDF.')),
         );
         return;
       }
 
+      if (_firestoreService == null) return; // Salir si el servicio no está listo
+
       final newBook = Book(
-        title: _titleController.text,
-        author: _authorController.text,
-        imageUrl: _imageUrlController.text.isNotEmpty ? _imageUrlController.text : null,
-        totalPages: int.tryParse(_totalPagesController.text) ?? 0,
-        status: 'Pendiente', // Estado inicial por defecto
-        pagesRead: 0,
-      );
+          title: _titleController.text,
+          author: _authorController.text,
+          pdfPath: _pickedFilePath,
+          status: 'Pendiente',
+          pagesRead: 0,
+          totalPages: 0,
+          readingTimeInSeconds: 0
+          // totalPages se calculará cuando se abra el libro por primera vez
+          );
 
       await _firestoreService!.addBook(newBook);
 
       if (mounted) {
-        // Regresar a la página anterior después de añadir el libro
         context.pop();
       }
     }
@@ -75,7 +97,6 @@ class _AddBookPageState extends State<AddBookPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Mostrar un loader mientras se inicializa el servicio
     if (_isInitializing) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -94,47 +115,43 @@ class _AddBookPageState extends State<AddBookPage> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Título'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el título';
-                  }
-                  return null;
-                },
+                decoration: const InputDecoration(labelText: 'Título del Libro'),
+                validator: (value) => (value == null || value.isEmpty) ? 'Ingrese un título' : null,
               ),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _authorController,
-                decoration: const InputDecoration(labelText: 'Autor'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el autor';
-                  }
-                  return null;
-                },
+                decoration: const InputDecoration(labelText: 'Autor del Libro'),
+                validator: (value) => (value == null || value.isEmpty) ? 'Ingrese un autor' : null,
               ),
-              TextFormField(
-                controller: _imageUrlController,
-                decoration: const InputDecoration(labelText: 'URL de la Portada (Opcional)'),
-                // Sin validador para que sea opcional
+              const SizedBox(height: 30),
+              
+              // --- Botón y texto para seleccionar PDF ---
+              OutlinedButton.icon(
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Seleccionar PDF'),
+                onPressed: _pickPdf,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
               ),
-              TextFormField(
-                controller: _totalPagesController,
-                decoration: const InputDecoration(labelText: 'Número de Páginas'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingrese el número de páginas';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Por favor, ingrese un número válido';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
+              if (_pickedFileName != null)
+                Center(
+                  child: Text(
+                    'Archivo: $_pickedFileName',
+                    style: const TextStyle(color: Colors.black54, fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+              const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: _addBook,
                 child: const Text('Añadir Libro'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
               ),
             ],
           ),

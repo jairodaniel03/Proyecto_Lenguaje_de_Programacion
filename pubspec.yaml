@@ -18,6 +18,8 @@ dependencies:
   firebase_auth: ^4.16.0
   google_sign_in: ^6.1.5
   shared_preferences: ^2.5.3
+  file_picker: ^10.3.7
+  flutter_pdfview: ^1.4.3
 
 dev_dependencies:
   flutter_test:
