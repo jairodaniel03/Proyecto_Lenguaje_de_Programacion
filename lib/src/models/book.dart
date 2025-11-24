@@ -21,6 +21,28 @@ class Book {
     this.readingTimeInSeconds = 0,
   });
 
+  Book copyWith({
+    String? id,
+    String? title,
+    String? author,
+    String? pdfPath,
+    String? status,
+    int? totalPages,
+    int? pagesRead,
+    int? readingTimeInSeconds,
+  }) {
+    return Book(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      pdfPath: pdfPath ?? this.pdfPath,
+      status: status ?? this.status,
+      totalPages: totalPages ?? this.totalPages,
+      pagesRead: pagesRead ?? this.pagesRead,
+      readingTimeInSeconds: readingTimeInSeconds ?? this.readingTimeInSeconds,
+    );
+  }
+
   // --- Métodos para Almacenamiento Local (JSON) ---
 
   factory Book.fromJson(Map<String, dynamic> json) {

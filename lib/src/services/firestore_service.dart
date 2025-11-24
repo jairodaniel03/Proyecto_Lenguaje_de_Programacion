@@ -57,18 +57,11 @@ class FirestoreService {
   }
 
   Stream<List<Book>> getBooks() => _booksController.stream;
+  List<Book> get initialBooks => _localBooks;
 
   Future<void> addBook(Book book) async {
-    // Corregido: Usar los campos del nuevo modelo Book
-    final newBook = Book(
+    final newBook = book.copyWith(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: book.title,
-      author: book.author,
-      pdfPath: book.pdfPath, // Usar pdfPath en lugar de imageUrl
-      totalPages: book.totalPages,
-      status: book.status,
-      pagesRead: book.pagesRead,
-      readingTimeInSeconds: book.readingTimeInSeconds,
     );
 
     _localBooks.add(newBook);

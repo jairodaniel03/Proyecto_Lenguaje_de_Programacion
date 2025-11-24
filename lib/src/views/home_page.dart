@@ -51,6 +51,7 @@ class _HomePageState extends State<HomePage> {
 
     return StreamBuilder<List<Book>>(
       stream: _firestoreService!.getBooks(),
+      initialData: _firestoreService!.initialBooks,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());

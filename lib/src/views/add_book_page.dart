@@ -90,7 +90,7 @@ class _AddBookPageState extends State<AddBookPage> {
       await _firestoreService!.addBook(newBook);
 
       if (mounted) {
-        context.pop();
+        context.go('/');
       }
     }
   }
