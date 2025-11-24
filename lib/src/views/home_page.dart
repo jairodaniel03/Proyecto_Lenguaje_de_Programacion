@@ -1,32 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:proyecto_lenguaje/src/services/firebase_auth.dart';
 import 'package:proyecto_lenguaje/src/services/firestore_service.dart';
 import '../models/book.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final firestoreService = FirestoreService();
+  State<HomePage> createState() => _HomePageState();
+}
 
+class _HomePageState extends State<HomePage> {
+  final FirestoreService _firestoreService = FirestoreService();
+  final AuthService _authService = AuthService();
+
+  Future<void> _signOut() async {
+    await _authService.signOut();
+    if (mounted) {
+      context.go('/login');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reto de Lectura'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // Lógica para cerrar sesión (cuando se implemente)
-            },
+            onPressed: _signOut,
           )
         ],
       ),
       body: StreamBuilder<List<Book>>(
-        stream: firestoreService.getBooks(),
+        stream: _firestoreService.getBooks(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('Aún no has añadido ningún libro.'));
@@ -41,7 +56,9 @@ class HomePage extends StatelessWidget {
               return ListTile(
                 title: Text(book.title),
                 subtitle: Text(book.author),
-                leading: Image.network(book.imageUrl, width: 50, fit: BoxFit.cover),
+                leading: book.imageUrl.isNotEmpty
+                    ? Image.network(book.imageUrl, width: 50, fit: BoxFit.cover)
+                    : const Icon(Icons.book, size: 50), // Imagen de placeholder
                 onTap: () {
                   // Navegar a la pantalla de detalles/seguimiento del libro
                 },
