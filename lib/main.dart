@@ -1,8 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'src/views/log_in.dart';
+import 'package:proyecto_lenguaje/src/views/add_book_page.dart';
+import 'package:proyecto_lenguaje/src/views/home_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -10,12 +14,17 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   GoRouter get _router => GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/',
     routes: [
       GoRoute(
-        path: '/login',
-        name: 'login',
-        builder: (context, state) => const LoginPage(),
+        path: '/',
+        name: 'home',
+        builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: '/add-book',
+        name: 'add-book',
+        builder: (context, state) => const AddBookPage(),
       ),
     ],
   );
