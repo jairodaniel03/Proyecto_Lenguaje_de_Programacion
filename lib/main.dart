@@ -7,7 +7,8 @@ import 'package:proyecto_lenguaje/src/views/log_in.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  // TODO: Descomentar esta línea cuando la configuración de Firebase esté completa.
+  // await Firebase.initializeApp(); 
   runApp(const MyApp());
 }
 

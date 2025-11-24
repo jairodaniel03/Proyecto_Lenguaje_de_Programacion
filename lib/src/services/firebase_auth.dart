@@ -1,48 +1,48 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:async';
+
+// El tipo 'User' de Firebase Auth. Lo mantenemos para compatibilidad de la API,
+// pero no usaremos la implementación real.
+// Si da problemas, se puede crear una clase `FakeUser {}`.
+import 'package:firebase_auth/firebase_auth.dart' show User;
+
+// --- MODO DE DESARROLLO 100% OFFLINE ---
+// TODO: Revertir este archivo a la versión de Firebase cuando el login esté arreglado.
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // No se crean instancias de servicios de Firebase, eliminando la causa del error.
 
+  /// Devuelve siempre null porque no hay un usuario real en modo offline.
   User? getCurrentUser() {
-    return _auth.currentUser;
+    return null;
   }
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  /// Devuelve un stream que emite un único valor nulo y luego se cierra.
+  Stream<User?> get authStateChanges => Stream.value(null);
 
+  /// Simula un inicio de sesión con email, esperando un momento antes de "resolver".
+  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+    print('AuthService (Offline): Simulating email sign-in for $email.');
+    await Future.delayed(const Duration(milliseconds: 200));
+    return null; // La lógica de la UI no depende del objeto User devuelto.
+  }
+
+  /// Simula la creación de un usuario.
+  Future<User?> createUserWithEmailAndPassword(String email, String password) async {
+    print('AuthService (Offline): Simulating user creation for $email.');
+    await Future.delayed(const Duration(milliseconds: 200));
+    return null;
+  }
+
+  /// Simula un inicio de sesión con Google.
   Future<User?> signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
-      if (googleUser == null) {
-        // El usuario canceló el flujo de inicio de sesión
-        return null;
-      }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // Crea una credencial de Firebase con el token de Google
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Inicia sesión en Firebase con la credencial
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      return userCredential.user;
-
-    } on FirebaseAuthException catch (e) {
-      print('Error de FirebaseAuth: ${e.message}');
-      return null;
-    } catch (e) {
-      print('Ocurrió un error durante el inicio de sesión con Google: $e');
-      return null;
-    }
+    print('AuthService (Offline): Simulating Google sign-in.');
+    await Future.delayed(const Duration(milliseconds: 200));
+    return null;
   }
 
+  /// Simula el cierre de sesión.
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+    print('AuthService (Offline): Simulating sign-out.');
+    await Future.delayed(const Duration(milliseconds: 100));
   }
 }
